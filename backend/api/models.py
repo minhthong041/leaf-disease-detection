@@ -59,17 +59,12 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
-    class Role(models.TextChoices):
-        USER = 'user', 'Người dùng'
-        EXPERT = 'expert', 'Chuyên gia'
-
     # unique=True giữ lại vì Django yêu cầu USERNAME_FIELD unique; unique không phân biệt
     # hoa thường nằm ở Meta.constraints. NULL khi tài khoản đã bị xóa (ẩn danh hóa).
     username = models.CharField(max_length=50, unique=True, null=True, blank=True)
     fullname = models.CharField(max_length=255)
     email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
     password = models.CharField(max_length=255, db_column='password_hash')
-    role = models.CharField(max_length=20, choices=Role.choices, default=Role.USER, db_index=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)

@@ -9,7 +9,6 @@ username: varchar(50) unique nullable
 fullname: varchar(255)
 email: varchar(255) unique nullable
 password_hash: varchar(255)
-role: varchar(20) indexed default:user
 created_at: timestamptz indexed
 is_staff: boolean default:false
 is_superuser: boolean default:false
