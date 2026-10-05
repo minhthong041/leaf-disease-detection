@@ -1,0 +1,99 @@
+# Kiểm tra tự động cho mỗi Pull Request và mỗi lần cập nhật main
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Push commit mới vào PR thì hủy lần chạy cũ đang dở
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    # PostgreSQL tạm cho CI, chỉ sống trong lúc job chạy
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: leaf_disease_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # Thay cho backend/.env (file .env không có trên git)
+    env:
+      DB_NAME: leaf_disease_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+      DJANGO_DEBUG: 'False'
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Cài thư viện
+        run: pip install -r requirements.txt
+
+      - name: Kiểm tra cấu hình Django
+        run: python manage.py check
+
+      - name: Kiểm tra đã tạo đủ migration
+        # Lỗi ở đây nghĩa là đã sửa models.py nhưng quên chạy makemigrations api
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Chạy migration trên database trống
+        run: python manage.py migrate --noinput
+
+      - name: Chạy test
+        run: python manage.py test api
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cài thư viện
+        run: npm ci
+
+      - name: Kiểm tra code (oxlint)
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
