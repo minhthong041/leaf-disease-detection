@@ -1,0 +1,8 @@
+# Chuẩn hóa ký tự xuống dòng: repo lưu LF, mỗi máy tự đổi theo hệ điều hành khi checkout
+* text=auto
+
+# File nhị phân: không bao giờ đổi xuống dòng hay so sánh như văn bản
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
