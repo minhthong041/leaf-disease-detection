@@ -32,7 +32,7 @@ erDiagram
         varchar email "unique, nullable"
         varchar username "unique, nullable"
         varchar fullname
-        varchar role
+        boolean is_staff
         timestamptz deleted_at "nullable"
     }
     diagnosis_histories {
@@ -81,7 +81,6 @@ Các cột là NOT NULL trừ khi ghi "có".
 | `username` | varchar(50) | có | | Tên hiển thị tùy chọn. Unique, không phân biệt hoa thường |
 | `fullname` | varchar(255) | | | Họ tên |
 | `password_hash` | varchar(255) | | | Mật khẩu đã băm. Trong Django là field `password`; luôn dùng `user.set_password()`, không gán trực tiếp |
-| `role` | varchar(20) | | `user` | Vai trò nghiệp vụ, xem [mục 3](#3-giá-trị-hợp-lệ-choices) |
 | `is_active` | boolean | | `true` | `false` = không đăng nhập được (bị khóa hoặc đã xóa) |
 | `is_staff` | boolean | | `false` | Được vào trang `/admin/` |
 | `is_superuser` | boolean | | `false` | Có mọi quyền trong admin |
@@ -91,10 +90,9 @@ Các cột là NOT NULL trừ khi ghi "có".
 | `terms_version` | varchar(20) | | | Phiên bản điều khoản đã đồng ý (lấy từ `settings.TERMS_VERSION`) |
 | `created_at`, `updated_at` | timestamptz | | | |
 
-**Phân biệt `role` và `is_staff`/`is_superuser`:**
-- `role` dùng cho **nghiệp vụ trong app** (ví dụ chỉ `expert` mới được duyệt feedback).
-- `is_staff` / `is_superuser` chỉ dùng cho **quyền vào trang admin Django**.
-- Không có `role = 'admin'` — quản trị viên là người có `is_staff = true`.
+**Phân quyền:** không có cột vai trò. Chỉ có hai loại tài khoản:
+- **Người dùng**: `is_staff = false`, dùng các chức năng trong app (chẩn đoán, lịch sử, feedback, báo lỗi).
+- **Quản trị viên**: `is_staff = true`, vào được trang `/admin/` để quản lý người dùng, duyệt feedback và xử lý báo lỗi. `is_superuser = true` thì có mọi quyền trong admin.
 
 Ngoài ra Django tự tạo 2 bảng phụ `users_groups` và `users_user_permissions` (từ `PermissionsMixin`) để phân quyền trong admin.
 
@@ -167,12 +165,11 @@ Những thứ **không** lưu trong database:
 
 | Cột | Giá trị | Hằng số trong code |
 |---|---|---|
-| `users.role` | `user`, `expert` | `User.Role.USER`, `User.Role.EXPERT` |
 | `diagnosis_histories.status` | `pending`, `processing`, `done`, `failed` | `DiagnosisHistory.Status.*` |
 | `diagnosis_histories.severity` | `healthy`, `mild`, `moderate`, `severe` | `DiagnosisHistory.Severity.*` |
 | `feedbacks.status` | `pending`, `accepted`, `rejected` | `Feedback.Status.*` |
 
-Nhãn tiếng Việt để hiển thị: `obj.get_status_display()`, `history.get_severity_display()`, `user.get_role_display()`.
+Nhãn tiếng Việt để hiển thị: `obj.get_status_display()`, `history.get_severity_display()`.
 
 ---
 
@@ -261,7 +258,7 @@ Vi phạm ràng buộc sẽ ném `IntegrityError` — API nên bắt và trả l
 | `idx_dh_user_created` | `diagnosis_histories` | `(user_id, created_at)` | Lịch sử của một người, mới nhất trước |
 | `idx_dh_user_bookmarked` | `diagnosis_histories` | `(user_id, is_bookmarked)` | Danh sách đã lưu của một người |
 | `idx_er_unresolved` | `error_reports` | `created_at` **WHERE** `is_resolved = false` | Danh sách báo lỗi chưa xử lý |
-| (tự động) | các bảng | `created_at`, `status`, `severity`, `role`, các khóa ngoại | |
+| (tự động) | các bảng | `created_at`, `status`, `severity`, các khóa ngoại | |
 
 ---
 

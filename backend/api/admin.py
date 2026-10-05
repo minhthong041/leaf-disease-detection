@@ -11,7 +11,7 @@ from .models import DiagnosisHistory, ErrorReport, Feedback, User
 class UserCreationForm(BaseUserCreationForm):
     class Meta:
         model = User
-        fields = ('email', 'fullname', 'role')
+        fields = ('email', 'fullname')
 
 
 class UserChangeForm(BaseUserChangeForm):
@@ -25,8 +25,8 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('email', 'username', 'fullname', 'role', 'is_active', 'is_staff', 'deleted_at', 'created_at')
-    list_filter = ('role', 'is_active', 'is_staff', 'is_superuser')
+    list_display = ('email', 'username', 'fullname', 'is_active', 'is_staff', 'deleted_at', 'created_at')
+    list_filter = ('is_active', 'is_staff', 'is_superuser')
     search_fields = ('email', 'username', 'fullname')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at', 'last_login', 'deleted_at', 'terms_accepted_at', 'terms_version')
@@ -34,7 +34,7 @@ class UserAdmin(BaseUserAdmin):
 
     fieldsets = (
         (None, {'fields': ('email', 'username', 'password')}),
-        ('Thông tin', {'fields': ('fullname', 'role')}),
+        ('Thông tin', {'fields': ('fullname',)}),
         ('Quyền', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Điều khoản', {'fields': ('terms_accepted_at', 'terms_version')}),
         ('Thời gian', {'fields': ('last_login', 'created_at', 'updated_at', 'deleted_at')}),
@@ -42,7 +42,7 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'fullname', 'role', 'password1', 'password2'),
+            'fields': ('email', 'fullname', 'password1', 'password2'),
         }),
     )
 
